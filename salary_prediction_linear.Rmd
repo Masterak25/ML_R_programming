@@ -1,0 +1,111 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+getwd()
+setwd("D:\\R-code")
+```
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(rio)
+
+mydata1 <- import("D:\\R-code\\Salary_lm.csv")
+head(mydata1)
+
+```
+
+```{r}
+mydata1$Salary=as.factor(mydata1$Salary)
+
+```
+
+```{r}
+str(mydata1)
+```
+
+```{r}
+mydata1$Salary=as.numeric(mydata1$Salary)
+```
+
+```{r}
+str(mydata1)
+```
+
+```{r}
+summary(mydata1)
+```
+
+
+```{r}
+sum(is.na(mydata1))
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+```{r}
+my_corr=cor(mydata1)
+library("corrplot")
+corrplot(my_corr)
+```
+
+
+```{r}
+plot(mydata1,col= "blue",pch=19)
+```
+
+
+```{r}
+library("caTools")
+set.seed(1000000)
+split=sample.split(mydata1,SplitRatio = 0.8)
+split
+
+```
+
+
+```{r}
+Train=subset(mydata1,split=="TRUE")
+Test=subset(mydata1,split=="FALSE")
+```
+d.
+```{r}
+my_model = lm(Salary~Student+School_Ranking+GPA+Experience, data = Train)
+#or
+my_model1 = lm(Salary~., data = Train)
+```
+
+```{r}
+summary(my_model)
+
+```
+```{r}
+my_model2 = lm(Salary~.-GPA, data = Train)
+summary(my_model2)
+```
+```{r}
+y_pred=predict.lm(my_model2,Test)
+y_pred
+```
+```{r}
+res=Test$Salary - y_pred
+res
+```
+```{r}
+plot(Test$Salary ,type='l',col="blue",main = "actual vs predicted",
+     xlab = "Index",ylab = "Salary")
+lines(y_pred,type = 'l',col="red")
+```
+```{r}
+RMSE = sqrt(mean((res)^2))
+RMSE
+```
+```{r}
+#install.packages("Metrics")
+library(Metrics)
+rmse(Test$Salary, y_pred)
+```
+

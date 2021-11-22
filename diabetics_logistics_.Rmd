@@ -1,0 +1,270 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: default
+    number_sections: yes
+  word_document: default
+  pdf_document: default
+---
+
+```{r}
+cat("\014")
+rm(list = ls())
+```
+
+## working directory check
+
+```{r}
+getwd()
+
+```
+
+```{r}
+setwd("D:/R-code")
+```
+
+
+
+```{r}
+pacman::p_load(pacman, dplyr, GGally, ggplot2, ggthemes, 
+  ggvis, httr, lubridate, plotly, rio, rmarkdown, shiny, 
+  stringr, tidyr,caret,ROCR,InformationValue,ISLR,Metrics,BiocManager)
+```
+
+## importing dataset
+
+```{r}
+library(dplyr)
+library(rio)
+df <- import("diabetes.csv")
+glimpse(df)
+```
+
+```{r}
+head(df)
+```
+
+```{r}
+class(df)
+```
+
+```{r}
+
+df$Outcome=as.factor(df$Outcome)
+str(df$Outcome)
+```
+
+```{r}
+colSums(is.na(df))
+```
+## visualization 
+
+```{r}
+plot(df,col= "blue",pch=19)
+```
+
+```{r}
+library(heatmaply)
+heatmaply(df)
+```
+## psych library is used to check normality and perform correlograms
+
+```{r}
+library(psych)
+describe(df)
+```
+## correlograms
+```{r}
+pairs.panels(df,pch='.')
+
+```
+
+```{r}
+boxplot(df ,vertical = TRUE,xlab="",ylab="values",col = "pink",pch=19 )
+```
+
+```{r}
+hist(df$Insulin,col = "green",pch=19,xlab="",main="histogram of Insulin")
+```
+```{r}
+ggvis(df, ~BMI, ~Age,stroke = ~Pregnancies)
+```
+
+```{r}
+ggvis(df, ~BMI, ~Age,size = ~Pregnancies)
+```
+
+
+
+```{r}
+ggvis(df, ~Glucose)
+```
+
+```{r}
+ggvis(df, ~factor(Outcome))
+```
+
+
+```{r}
+ggvis(df, ~BMI, ~Age,shape := "cross")
+```
+
+```{r}
+den_col = names(select(df, -Outcome))
+
+par(mfrow=c(3,3))
+for (col in den_col) {
+  plot(density(df[, col]), main = paste(col), colorize = TRUE)
+}
+
+```
+```{r}
+ggpairs(df) 
+```
+```{r}
+plot_ly(
+  data = df,
+  x = ~DiabetesPedigreeFunction,
+  y = ~BloodPressure
+)
+```
+```{r}
+ggp <- ggplot(df, aes(BMI, Age)) +                           # Create heatmap with ggplot2
+  geom_tile(aes(fill = Outcome))
+ggp  
+```
+
+##model selection 
+
+```{r}
+library(caret)
+library(InformationValue)
+library(ISLR)
+
+```
+
+
+```{r}
+library(caret)
+
+set.seed(100)
+ 
+# creating training data as 80% of the dataset
+random_sample <- createDataPartition(df$Outcome,p = 0.8, list = FALSE)
+train<- df[random_sample, ]
+test<- df[-random_sample, ]
+```
+
+```{r}
+head(train)
+```
+## model_building
+
+```{r}
+model=glm(Outcome~.,train,family='binomial')
+```
+
+```{r}
+summary(model)
+```
+
+
+```{r}
+#use model to predict probability of default
+predicted <- predict(model, test, type="response")
+```
+
+
+## confusion_matrix
+```{r}
+c=table(actual=test$Outcome,Predicted= predicted>0.50)
+c
+```
+
+```{r}
+confusionMatrix(test$Outcome, predicted>0.5)
+```
+
+
+
+
+```{r}
+sum(diag(c)/sum(c))
+```
+
+
+## ROC_curve
+```{r}
+library(ROCR)
+ROCR_pred=prediction(predicted,test$Outcome)
+performance_ROC=performance(ROCR_pred,'tpr','fpr')
+```
+
+```{r}
+plot(performance_ROC,colorize=TRUE)
+```
+
+
+
+```{r}
+#find optimal cutoff probability to use to maximize accuracy
+optimal <- optimalCutoff(test$Outcome, predicted)
+optimal
+```
+```{r}
+d=table(actual=test$Outcome,Predicted= predicted>0.6043702)
+d
+```
+
+
+```{r}
+confusionMatrix(test$Outcome, predicted>0.6043702)
+```
+
+
+
+
+## accuracy traditional method
+```{r}
+sum(diag(d)/sum(d))
+```
+
+```{r}
+#convert defaults from "Yes" and "No" to 1's and 0's
+pred <- ifelse(predicted>0.6043702,1,0)
+```
+
+## accuracy using library
+```{r}
+pred=ifelse(pred>0.6043702,1,0)
+accuracy(test$Outcome,pred)
+```
+
+
+
+
+```{r}
+#calculate sensitivity
+sensitivity(test$Outcome,pred)
+```
+
+```{r}
+#calculate specificity
+specificity(test$Outcome,pred)
+```
+
+```{r}
+#calculate total misclassification error rate
+misClassError(test$Outcome,pred, threshold=optimal)
+```
+The total misclassification error rate is 22.88% for this model.
+
+
+
+
+
+
+
+
+

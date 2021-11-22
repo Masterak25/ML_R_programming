@@ -1,0 +1,190 @@
+---
+title: "R Notebook"
+output: html_notebook
+          ---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+
+```{r}
+cat("\014")
+rm(list = ls())
+```
+
+## working directory check
+
+```{r}
+getwd()
+
+```
+```{r}
+setwd("D:\\R-code")
+```
+
+
+
+```{r}
+pacman::p_load(pacman, dplyr, GGally, ggplot2, ggthemes, 
+  ggvis, httr, lubridate, plotly, rio, rmarkdown, shiny, 
+  stringr, tidyr,caret,ROCR)
+```
+
+
+## importing dataset
+
+```{r}
+library(dplyr)
+library(rio)
+df <- import("Titanic.xlsx")
+glimpse(df)
+```
+
+```{r}
+head(df)
+```
+```{r}
+colSums(is.na(df))
+```
+```{r}
+df$Age[is.na(df$Age)]=median(df$Age,na.rm = TRUE)
+colSums(is.na(df))
+```
+```{r}
+str(df$Survived)
+```
+
+```{r}
+
+df$Survived=as.factor(df$Survived)
+str(df$Survived)
+```
+
+```{r}
+ggplot(df,aes(Age))+geom_density(fill='lightblue',alpha=20)
+```
+
+
+```{r}
+ggplot(df,aes(Fare,fill=Survived))+
+  geom_density(fill='lightblue',alpha=20)+scale_fill_viridis_d()
+```
+
+```{r}
+ggplot(df,aes(Pclass,Age,color=Survived))+geom_point()
+
+```
+
+
+```{r}
+ggplot(df,aes(Age,Fare,col=as.factor(Pclass)))+geom_point()
+```
+
+## Labelencoding to convert object into numerical format
+```{r}
+char_col = names(select_if(df, is.character))
+library(superml)
+LE <- LabelEncoder$new()
+for (col in char_col)
+  {
+  df[, col] <- LE$fit_transform(df[, col])}
+head(df)
+```
+
+## psych library is used to check normality and perform correlograms
+
+```{r}
+#install.packages("psych")
+library(psych)
+describe(df)
+```
+
+## correlograms
+```{r}
+pairs.panels(df,pch='.')
+
+```
+
+## summary of our dataset
+
+```{r}
+summary(df)
+```
+
+```{r}
+plot(df,col= "blue",pch=19)
+```
+
+```{r}
+#install.packages("heatmaply")
+library(heatmaply)
+heatmaply(df)
+```
+
+```{r}
+boxplot(df ,vertical = TRUE,xlab="",ylab="values",col = "pink",pch=19 )
+```
+```{r}
+hist(df$Fare,col = "green",pch=19,xlab="",main="histogram of charges")
+```
+```{r}
+df=subset(df,select=-c(PassengerId,Name,Ticket))
+head(df)
+```
+
+```{r}
+library("caTools")
+set.seed(100)
+split=sample.split(df,SplitRatio = 0.8)
+split
+```
+```{r}
+Train=subset(df,split=="TRUE")
+Test=subset(df,split=="FALSE")
+```
+
+
+```{r}
+head(Train)
+```
+```{r}
+model=glm(Survived~.,Train,family='binomial')
+```
+
+```{r}
+summary(model)
+```
+
+
+```{r}
+y_pred= predict(model,Test,type = 'response')
+head(y_pred)
+```
+```{r}
+c=table(actual=Test$Survived,Predicted=y_pred>0.60)
+c
+```
+
+```{r}
+sum(diag(c)/sum(c))
+```
+```{r}
+library(ROCR)
+ROCR_pred=prediction(y_pred,Test$Survived)
+performance_ROC=performance(ROCR_pred,'tpr','fpr')
+```
+
+```{r}
+plot(performance_ROC,colorize=TRUE)
+```
+
+
+

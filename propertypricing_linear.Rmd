@@ -1,0 +1,231 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+##clearing console and environment variable if we use old notebook file unfortunately
+
+```{r}
+cat("\014")
+rm(list = ls())
+```
+
+## working directory check
+
+```{r}
+getwd()
+
+```
+```{r}
+setwd("D:\\R-code")
+```
+
+```{r}
+pacman::p_load(pacman, dplyr, GGally, ggplot2, ggthemes, 
+  ggvis, httr, lubridate, plotly, rio, rmarkdown, shiny, 
+  stringr, tidyr,caret)
+```
+
+
+
+
+## importing dataset
+
+```{r}
+library(dplyr)
+library(rio)
+df <- import("D:\\R-code\\PropertyTrainData.csv")
+glimpse(df)
+```
+
+```{r}
+head(df)
+```
+
+
+## psych library is used to check normality and perform correlograms
+
+```{r}
+#install.packages("psych")
+library(psych)
+describe(df)
+```
+
+## correlograms
+```{r}
+pairs.panels(df,pch='.')
+
+```
+
+## summary of our dataset
+
+```{r}
+summary(df)
+```
+
+
+## checking null values
+```{r}
+sum(is.na(df))
+```
+## correlation graph
+
+```{r}
+my_corr=cor(df)
+library("corrplot")
+corrplot(my_corr)
+```
+
+```{r}
+plot(df,col= "blue",pch=19)
+```
+
+```{r}
+
+library(heatmaply)
+heatmaply(df)
+
+```
+
+
+
+```{r}
+dim(df)
+```
+
+## Splitting our dataset for Training and Validation using caTools
+
+```{r}
+#library("caTools")
+#set.seed(100)
+#split=sample.split(df,SplitRatio = 0.8)
+#split
+```
+```{r}
+# R program to implement
+# validation set approach
+ 
+# setting seed to generate a
+# reproducible random sampling
+library(caret)
+
+set.seed(123)
+ 
+# creating training data as 80% of the dataset
+random_sample <- createDataPartition(df$Price,p = 0.8, list = FALSE)
+Train<- df[random_sample, ]
+Test<- df[-random_sample, ]
+```
+
+
+```{r}
+#Train=subset(df,split=="TRUE")
+#Test=subset(df,split=="FALSE")
+```
+
+
+```{r}
+head(Train)
+```
+
+## Building Linear Model Regression
+
+```{r}
+my_model = lm(Price~., data = Train)
+```
+
+```{r}
+summary(my_model)
+```
+
+## Prediction using test data
+
+```{r}
+y_pred=predict.lm(my_model,Test)
+head(y_pred)
+```
+
+## Residual 
+
+```{r}
+res=Test$Price - y_pred
+head(res)
+```
+
+
+#plotting Actual_Insurance_charges  vs predicted_Insurance_charges
+
+```{r}
+plot(Test$Price ,type='l',col="blue",main = "Actual_Insurance_charges  vs predicted_Insurance_charges",
+     xlab = "Index",ylab = "Insurance_charges")
+lines(y_pred,type = 'l',col="red")
+```
+
+## performance_metrics using RMSE
+
+```{r}
+library(Metrics)
+mse(Test$Price, y_pred)
+rmse(Test$Price, y_pred)
+```
+## OLS assumptions
+
+```{r}
+par(mfrow=c(2,2))
+plot(my_model, which=1,col="red")
+plot(my_model, which=2,col="blue")
+plot(my_model, which=3,col="green")
+plot(my_model, which=5,col="pink")
+
+```
+
+```{r}
+df5 <- import("D:\\R-code\\PropertyTestData.csv")
+glimpse(df5)
+```
+```{r}
+head(df5)
+```
+
+```{r}
+Test1=select(df5,-Price)
+head(Test1)
+```
+
+```{r}
+Predicted_price=predict.lm(my_model,Test1)
+head(Predicted_price)
+```
+```{r}
+col=select(df5,Price)
+result=data.frame(col,Predicted_price)
+head(result)
+```
+
+```{r}
+write.csv(result,'result.csv')
+```
+
+
+
+
+
+
+
+
+
+
+
+
