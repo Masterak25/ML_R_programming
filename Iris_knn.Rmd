@@ -1,0 +1,69 @@
+```{r}
+cat("\014")
+rm(list = ls())
+```
+
+## working directory check
+
+```{r}
+getwd()
+
+```
+# set the working directory
+
+```{r}
+setwd("D:/R-code")
+```
+
+# load necessary library
+```{r}
+pacman::p_load(pacman,caTools,class)
+```
+
+## model selection
+```{r}
+#iris
+set.seed(5)
+split=sample.split(iris,SplitRatio = 0.8)
+Train=subset(iris,split=="TRUE")
+Test=subset(iris,split=="FALSE")
+
+```
+
+## normalizing dataset
+```{r}
+data_norm <- function(x) 
+  {
+    (x - min(x)) / (max(x) - min(x))
+  }
+```
+
+```{r}
+Train_n = as.data.frame(lapply(Train[,-5], data_norm))
+Train_n
+```
+
+```{r}
+y_train=Train$Species
+```
+
+
+```{r}
+Test_n = as.data.frame(lapply(Test[,-5], data_norm))
+Test_n
+```
+```{r}
+y_test=Test$Species
+```
+
+
+#square root method so k=11
+```{r}
+iris_model=knn(Train_n,Test_n,y_train,k=11)
+table(iris_model,y_test)
+```
+
+
+
+
+
