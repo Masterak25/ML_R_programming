@@ -1,0 +1,101 @@
+
+
+```{r}
+cat("\014")
+rm(list = ls())
+```
+
+## working directory check
+
+```{r}
+getwd()
+
+```
+# set the working directory
+
+```{r}
+setwd("D:/R-code")
+```
+
+```{r}
+pacman::p_load(pacman, dplyr, GGally, ggplot2, ggthemes, 
+  ggvis, httr, lubridate, plotly, rio, rmarkdown, shiny, 
+  stringr, tidyr,caret,ROCR,InformationValue,ISLR,Metrics,BiocManager,cluster,factoextra,gridExtra,purrr)
+```
+## importing dataset
+
+```{r}
+#data()
+#View(USArrests)
+df=USArrests
+glimpse(df)
+```
+
+```{r}
+head(df)
+```
+
+```{r}
+class(df)
+```
+```{r}
+colSums(is.na(df))
+```
+## initial assumption(k_value)
+```{r}
+kmeans1=kmeans(df,centers = 3)
+kmeans2=kmeans(df,centers = 4)
+```
+
+```{r}
+p1=fviz_cluster(kmeans1,geom = 'points',data = df) + ggtitle("k=3")
+```
+
+```{r}
+p2=fviz_cluster(kmeans2,geom = 'points',data = df) + ggtitle("k=4")
+```
+
+```{r}
+grid.arrange(p1,p2,nrow=2)
+```
+#Elbow method
+```{r}
+elbow=function(k)
+{
+  kmeans(df,k)$tot.withinss
+}
+k.values=c(1:15)
+elbow_value=map_dbl(k.values,elbow)
+plot(k.values,elbow_value,type='b',xlab="number of clusters") #b-bubble
+plot(k.values,elbow_value,type='b',xlab="number of clusters") 
+```
+# silhouette score
+```{r}
+silhouette_score=function(k)
+{
+  km=kmeans(df,k)
+  ss=silhouette(km$cluster,dist(df))
+  mean(ss[,3])
+}
+k.values=c(2:15)
+avg.sil=sapply(k.values,silhouette_score)
+plot(k.values,avg.sil)
+```
+# silhouette score(oneliner)
+```{r}
+fviz_nbclust(df,kmeans,method = 'silhouette')
+```
+
+```{r}
+df["Final_cluster"]=kmeans1$cluster
+head(df)
+```
+
+
+
+
+
+
+
+
+
