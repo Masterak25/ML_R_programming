@@ -1,0 +1,121 @@
+
+```{r}
+cat("\014")
+rm(list = ls())
+```
+
+## working directory check
+
+```{r}
+getwd()
+
+```
+# set the working directory
+
+```{r}
+setwd("D:/R-code")
+```
+
+```{r}
+pacman::p_load(pacman,caTools,class,dplyr,caret,gmodels,knitr)
+```
+## importing dataset
+
+```{r}
+library(dplyr)
+library(rio)
+df <- import("adult.csv")
+glimpse(df)
+```
+
+```{r}
+head(df)
+```
+
+```{r}
+dim(df)
+```
+```{r}
+colSums(is.na(df))
+```
+## Labelencoding to convert object into numerical format
+```{r}
+char_col = names(select_if(df, is.character))
+library(superml)
+LE <- LabelEncoder$new()
+for (col in char_col)
+  {
+  df[, col] <- LE$fit_transform(df[, col])}
+head(df)
+```
+
+
+## model selection
+```{r}
+#iris
+set.seed(100)
+split=sample.split(df,SplitRatio = 0.8)
+Train=subset(df,split=="TRUE")
+Test=subset(df,split=="FALSE")
+
+```
+
+## normalizing dataset
+```{r}
+data_norm <- function(x) 
+  {
+    (x - min(x)) / (max(x) - min(x))
+  }
+```
+
+```{r}
+Train_n = as.data.frame(lapply(Train[,-15], data_norm))
+Train_n
+```
+
+```{r}
+y_train=Train$income
+```
+
+
+```{r}
+Test_n = as.data.frame(lapply(Test[,-15], data_norm))
+Test_n
+```
+
+```{r}
+y_test=Test$income
+```
+
+```{r}
+dim(df)
+sqrt(48842)
+```
+
+#square root method so k=221
+```{r}
+income_model=knn(Train_n,Test_n,y_train,k=221)
+table(y_test,income_model)
+```
+
+```{r}
+confusionMatrix(table(y_test,income_model))
+
+```
+```{r}
+#install.packages("gmodels")
+#library(gmodels)
+CrossTable(x=y_test, y=income_model,prop.chisq = FALSE)
+```
+
+
+```{r}
+knit2html("KNN_Income_Prediction.Rmd")
+```
+
+
+```{r}
+cat("\014")
+rm(list = ls())
+```
+

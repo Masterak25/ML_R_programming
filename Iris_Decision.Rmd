@@ -1,0 +1,61 @@
+```{r}
+cat("\014")
+rm(list = ls())
+```
+
+## working directory check
+
+```{r}
+getwd()
+
+```
+# set the working directory
+
+```{r}
+setwd("D:/R-code")
+```
+
+# load necessary library
+```{r}
+pacman::p_load(pacman,caTools,party,partykit,rpart)
+```
+
+## model selection
+```{r}
+#iris
+set.seed(5)
+split=sample.split(iris,SplitRatio = 0.8)
+Train=subset(iris,split=="TRUE")
+Test=subset(iris,split=="FALSE")
+
+```
+
+
+##Creating a model to predict high, low, medium among the inputs using rparty
+```{r}
+tree<-ctree(Species~.,data = Train)
+tree
+```
+##Plots Using Ctree
+```{r}
+ct <- ctree(Species~ ., data = Train, maxdepth = 5, alpha = 0.5)
+st <- as.simpleparty(ct)
+plot(st)
+```
+
+```{r}
+y_pred=predict(tree,Test,type="prob")
+y_pred
+```
+
+
+
+## To predict the class using rpart () function for the class method. rpart () uses the Gini index measure to split the nodes.
+```{r}
+library(rpart)
+tr<-rpart(Species~., Train)
+library (rpart.plot)
+rpart.plot(tr)
+```
+
+##From the decision tree shown above we can conclude that anyone whose Petal.Length < 2.5 is setosa and Petal.Length < 4.9 is a versicolor and remaining virginica.

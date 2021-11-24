@@ -1,0 +1,117 @@
+```{r}
+cat("\014")
+rm(list = ls())
+```
+
+## working directory check
+
+```{r}
+getwd()
+
+```
+# set the working directory
+
+```{r}
+setwd("D:/R-code")
+```
+
+```{r}
+pacman::p_load(pacman,rio,dplyr,psych,caTools,e1071,rgl,caret,Metrics,Information)
+```
+
+# importing dataset
+
+```{r}
+df <- import("bank-additional-full.csv")
+glimpse(df)
+```
+```{r}
+head(df)
+```
+```{r}
+dim(df)
+```
+```{r}
+colSums(is.na(df))
+```
+```{r}
+char_col = names(select_if(df, is.character))
+for (col in char_col)
+{
+  df[,col]=as.factor(df[,col])
+}
+
+str(df)
+```
+
+
+## psych library is used to check normality and perform correlograms
+
+```{r}
+describe(df)
+```
+
+
+```{r}
+set.seed(5)
+split=sample.split(df,SplitRatio = 0.8)
+Train=subset(df,split=="TRUE")
+Test=subset(df,split=="FALSE")
+```
+
+```{r}
+Train$y = as.character(Train$y)
+Train$y = as.factor(Train$y)
+```
+
+
+```{r}
+svm_model=svm(y~.,data = Train,kernel='linear')
+summary(svm_model)
+```
+```{r}
+Test$y <- as.character(Test$y)
+Test$y <- as.factor(Test$y)
+y_pred=predict(svm_model,Test,type="response")
+head(y_pred)
+```
+
+```{r}
+caret::confusionMatrix(Test$y,y_pred)
+```
+
+```{r}
+cm=table(actual=Test$y,Predicted=y_pred)
+cm
+```
+
+```{r}
+accuracy=sum(diag(cm))/sum(cm)
+accuracy
+```
+```{r}
+kernel = c("linear", "radial", "sigmoid", "polynomial" )
+for (k in kernel){
+  print(paste("Kernel:", k))
+  svm_model = svm(y~., data = Train, kernel = k)
+  pred = predict(svm_model, Test)
+  print(paste("Accuracy Score:", accuracy(Test$y, pred)))
+}
+
+```
+
+```{r}
+cat("\014")
+rm(list = ls())
+```
+
+
+
+
+
+
+
+
+
+
+

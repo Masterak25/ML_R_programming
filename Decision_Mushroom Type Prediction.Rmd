@@ -1,0 +1,158 @@
+```{r}
+cat("\014")
+rm(list = ls())
+```
+
+## working directory check
+
+```{r}
+getwd()
+
+```
+# set the working directory
+
+```{r}
+setwd("D:/R-code")
+```
+
+```{r}
+pacman::p_load(pacman,caTools,party,partykit,
+               rpart,psych,caret,ROCR,caret,ISLR,Metrics,
+               BiocManager,dplyr,rio)
+```
+
+## importing dataset
+
+```{r}
+df <- import("mushrooms.csv")
+glimpse(df)
+```
+
+
+```{r}
+head(df)
+```
+
+
+```{r}
+dim(df)
+```
+
+```{r}
+colSums(is.na(df))
+```
+```{r}
+char_col = names(select_if(df, is.character))
+for (col in char_col)
+{
+  df[,col]=as.factor(df[,col])
+}
+head(df)
+str(df)
+```
+
+
+## psych library is used to check normality and perform correlograms
+
+```{r}
+describe(df)
+```
+
+## model selection
+```{r}
+#iris
+set.seed(5)
+split=sample.split(df,SplitRatio = 0.8)
+Train=subset(df,split=="TRUE")
+Test=subset(df,split=="FALSE")
+
+```
+
+
+```{r}
+tree<-ctree(class~.,data = Train)
+tree
+```
+##Plots Using Ctree
+```{r}
+ct <- ctree(class~ ., data = Train, maxdepth = 5, alpha = 0.5)
+st <- as.simpleparty(ct)
+plot(st)
+```
+```{r}
+y_pred=predict(tree,Test,type="response")
+head(y_pred)
+
+```
+## To predict the class using rpart () function for the class method. rpart () uses the Gini index measure to split the nodes.
+```{r}
+library(rpart)
+tr<-rpart(class~., Train)
+library (rpart.plot)
+rpart.plot(tr)
+```
+
+##From the decision tree shown above we can conclude that anyone whose odor =a,l,n and spore-print-color in b, h, k, n, o, u, w, y is edible and  remaining poisonous mushroom.
+
+```{r}
+unique(df$class)
+```
+
+```{r}
+cm=table(Predicted=y_pred,actual=Test$class)
+cm
+```
+
+```{r}
+accuracy=sum(diag(cm))/sum(cm)
+accuracy
+```
+
+```{r}
+caret::confusionMatrix(Test$class,y_pred)
+```
+```{r}
+actual=ifelse(Test$class=="e",0,1)
+head(actual)
+predicted=ifelse(y_pred=="e",0,1)
+head(predicted)
+```
+
+```{r}
+
+ROCR_pred=prediction(actual,predicted)
+performance_ROC=performance(ROCR_pred,'tpr','fpr')
+```
+
+```{r}
+plot(performance_ROC,colorize=TRUE)
+```
+
+```{r}
+#find optimal cutoff probability to use to maximize accuracy
+optimal <- optimalCutoff(actual, predicted)
+optimal
+```
+
+
+
+```{r}
+InformationValue::confusionMatrix(actual,predicted>optimal)
+```
+
+```{r}
+#convert defaults from "Yes" and "No" to 1's and 0's
+pred <- ifelse(predicted>optimal,1,0)
+```
+
+## accuracy using library
+```{r}
+pred=ifelse(predicted>optimal,1,0)
+accuracy(actual,pred)
+```
+```{r}
+#calculate sensitivity
+sensitivity(actual,pred)
+```
+
+

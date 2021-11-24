@@ -1,0 +1,99 @@
+```{r}
+cat("\014")
+rm(list = ls())
+```
+
+## working directory check
+
+```{r}
+getwd()
+
+```
+# set the working directory
+
+```{r}
+setwd("D:/R-code")
+```
+
+```{r}
+pacman::p_load(pacman,caTools,party,partykit,
+               rpart,psych,caret,ROCR,caret,ISLR,Metrics,
+               BiocManager,dplyr,rio,randomForest)
+```
+
+## importing dataset
+
+```{r}
+df <- import("train.csv")
+glimpse(df)
+```
+```{r}
+head(df)
+```
+```{r}
+dim(df)
+```
+
+```{r}
+colSums(is.na(df))
+```
+
+## psych library is used to check normality and perform correlograms
+
+```{r}
+describe(df)
+```
+## model selection
+```{r}
+#iris
+set.seed(5)
+split=sample.split(df,SplitRatio = 0.8)
+Train=subset(df,split=="TRUE")
+Test=subset(df,split=="FALSE")
+Train$price_range <- as.character(Train$price_range)
+Train$price_range <- as.factor(Train$price_range)
+```
+
+```{r}
+forest <- randomForest(price_range~.,data = Train)
+forest
+```
+```{r}
+Test$price_range <- as.character(Test$price_range)
+Test$price_range <- as.factor(Test$price_range)
+y_pred=predict(forest,Test,type="response")
+head(y_pred)
+
+```
+
+
+
+
+##Plots Using randomforest
+```{r}
+rft <- randomForest(price_range~ ., data = Train, maxdepth = 5, alpha = 0.5)
+plot(rft)
+```
+
+```{r}
+out.importance <- round(importance(forest), 2)
+out.importance
+```
+## From the random forest shown above we can conclude that the battery_power  score are the important factors deciding Price_range type. Also the model has only 7.5% error which means we can predict with 93.5% accuracy.
+
+
+```{r}
+cm=table(Predicted=y_pred,actual=Test$price_range)
+cm
+```
+
+```{r}
+caret::confusionMatrix(Test$price_range,y_pred)
+```
+
+```{r}
+cat("\014")
+rm(list = ls())
+```
+
+

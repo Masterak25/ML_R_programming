@@ -1,0 +1,75 @@
+```{r}
+cat("\014")
+rm(list = ls())
+```
+
+## working directory check
+
+```{r}
+getwd()
+
+```
+# set the working directory
+
+```{r}
+setwd("D:/R-code")
+```
+
+```{r}
+pacman::p_load(pacman,e1071,rgl,caret,Metrics)
+```
+
+
+
+
+```{r}
+plot(iris)
+```
+```{r}
+set.seed(5)
+s=sample(150,120)
+iris_Train=iris[s,]
+iris_Test=iris[-s,]
+```
+
+```{r}
+plot3d(iris$Sepal.Length,iris$Petal.Length,iris$Sepal.Width,col = as.numeric(iris$Species),size=5)
+```
+
+```{r}
+svm_model=svm(Species~.,data = iris_Train,kernel='linear')
+summary(svm_model)
+```
+
+```{r}
+y_pred=predict(svm_model,iris_Test)
+head(y_pred)
+```
+```{r}
+cm=table(iris_Test$Species,y_pred)
+cm
+```
+
+```{r}
+confusionMatrix(iris_Test$Species,y_pred)
+```
+
+
+```{r}
+accuracy=sum(diag(cm))/sum(cm)
+accuracy
+```
+```{r}
+kernel = c("linear", "radial", "sigmoid", "polynomial" )
+for (k in kernel){
+  print(paste("Kernel:", k))
+  svm_model = svm(Species~., data = iris_Train, kernel = k)
+  pred = predict(svm_model, iris_Test)
+  print(paste("Accuracy Score:", accuracy(iris_Test$Species, pred)))
+}
+
+```
+
+
+
+
