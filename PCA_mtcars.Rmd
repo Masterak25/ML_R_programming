@@ -1,0 +1,81 @@
+```{r}
+cat("\014")
+rm(list = ls())
+```
+
+## working directory check
+
+```{r}
+getwd()
+
+```
+# set the working directory
+
+```{r}
+setwd("D:/R-code")
+```
+
+# load necessary library
+```{r}
+pacman::p_load(pacman,datasets)
+```
+
+
+# LOAD DATA
+```{r}
+head(mtcars)
+cars <- mtcars[, c(1:4, 6:7, 9:11)]  # Select variables
+head(cars)
+```
+
+# COMPUTE PCA
+```{r}
+pc <- prcomp(cars,
+        center = TRUE,  # Centers means to 0 (optional)
+        scale = TRUE)   # Sets unit variance (helpful)
+
+```
+
+# To specify variables
+```{r}
+pc <- prcomp(~ mpg + cyl + disp + hp + wt + qsec + am +
+        gear + carb, 
+        data = mtcars, 
+        center = TRUE,
+        scale = TRUE)
+```
+
+# EXAMINE RESULTS
+```{r}
+summary(pc)
+```
+# Screeplot for number of components
+```{r}
+plot(pc)
+```
+# Get standard deviations and rotation
+```{r}
+pc
+```
+# See how cases load on PCs
+```{r}
+predict(pc) %>% round(2)
+```
+# Biplot of first two components
+```{r}
+biplot(pc)
+```
+# CLEAN UP
+```{r}
+cat("\014")
+rm(list = ls())
+```
+
+
+
+
+
+
+
+
+
