@@ -1,0 +1,90 @@
+```{r}
+cat("\014")
+rm(list = ls())
+```
+
+## working directory check
+
+```{r}
+getwd()
+
+```
+# set the working directory
+
+```{r}
+setwd("D:/R-code")
+```
+
+# load necessary library
+```{r}
+pacman::p_load(pacman,lares,beepr)
+```
+
+## The data we'll use is the Titanic dataset
+```{r}
+data(dft)
+df <- subset(dft, select = -c(Ticket, PassengerId, Cabin))
+```
+
+##Classification: Binary
+Let's begin with a binary (TRUE/FALSE) model to predict if each passenger Survived
+```{r}
+r <- h2o_automl(df, y = Survived, max_models = 1, impute = FALSE, target = "TRUE")
+```
+```{r}
+plot(r)
+```
+```{r}
+r$metrics
+```
+```{r}
+r$plots$metrics
+```
+
+```{r}
+head(r$importance)
+```
+```{r}
+r$plots$importance
+```
+
+##Classification: Multi-Categorical
+Now, let's run a multi-categorical (+2 labels) model to predict Pclass of each passenger
+```{r}
+r <- h2o_automl(df, Pclass, ignore = c("Fare", "Cabin"), max_time = 30, plots = FALSE)
+```
+```{r}
+plot(r)
+```
+##Regression
+Finally, a regression model with continuous values to predict Fare payed by passenger
+```{r}
+r <- h2o_automl(df, y = "Fare", ignore = "Pclass", exclude_algos = NULL, quiet = TRUE)
+print(r)
+```
+```{r}
+plot(r)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
