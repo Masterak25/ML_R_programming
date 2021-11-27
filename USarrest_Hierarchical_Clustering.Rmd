@@ -1,0 +1,163 @@
+```{r}
+cat("\014")
+rm(list = ls())
+```
+
+## working directory check
+
+```{r}
+getwd()
+
+```
+# set the working directory
+
+```{r}
+setwd("D:/R-code")
+```
+
+# load necessary library
+```{r}
+pacman::p_load(pacman,factoextra,cluster)
+```
+
+
+# load data
+```{r}
+df <- USArrests
+```
+
+# remove rows with missing values
+```{r}
+df <- na.omit(df)
+```
+
+# scale each variable to have a mean of 0 and sd of 1
+```{r}
+df <- scale(df)
+```
+
+# view first six rows of dataset
+```{r}
+head(df)
+```
+To perform hierarchical clustering in R we can use the agnes() function from the cluster package
+
+# define linkage methods
+```{r}
+m <- c( "average", "single", "complete", "ward")
+names(m) <- c( "average", "single", "complete", "ward")
+```
+
+#function to compute agglomerative coefficient
+```{r}
+ac <- function(x) {
+  agnes(df, method = x)$ac
+}
+```
+
+#calculate agglomerative coefficient for each clustering linkage method
+```{r}
+sapply(m, ac)
+```
+# perform hierarchical clustering using Ward's minimum variance
+```{r}
+clust <- agnes(df, method = "ward")
+```
+
+
+# produce dendrogram
+
+```{r}
+pltree(clust, cex = 0.6, hang = -1, main = "Dendrogram") 
+```
+To Determine the Optimal Number of Clusters
+
+# calculate gap statistic for each number of clusters (up to 10 clusters)
+```{r}
+gap_stat <- clusGap(df, FUN = hcut, nstart = 25, K.max = 10, B = 50)
+```
+# produce plot of clusters vs. gap statistic
+```{r}
+fviz_gap_stat(gap_stat)
+```
+From the plot we can see that the gap statistic is highest at k = 4 clusters. Thus, we’ll choose to group our observations into 4 distinct clusters.
+
+Applying Cluster Labels to Original Dataset
+#compute distance matrix
+```{r}
+d <- dist(df, method = "euclidean")
+```
+
+#perform hierarchical clustering using Ward's method
+```{r}
+final_clust <- hclust(d, method = "ward.D2" )
+```
+
+#cut the dendrogram into 4 clusters
+```{r}
+groups <- cutree(final_clust, k=4)
+```
+
+#find number of observations in each cluster
+```{r}
+table(groups)
+```
+
+#append cluster labels to original data
+```{r}
+final_data <- cbind(USArrests, cluster = groups)
+```
+
+#display first six rows of final data
+```{r}
+head(final_data)
+```
+
+
+#find mean values for each cluster
+```{r}
+aggregate(final_data, by=list(cluster=final_data$cluster), mean)
+```
+We interpret this output is as follows:
+
+1.The mean number of murders per 100,000 citizens among the states in cluster 1 is 14.67.
+2.The mean number of assaults per 100,000 citizens among the states in cluster 1 is 251.28.
+3.The mean percentage of residents living in an urban area among the states in cluster 1 is   54.28%.
+4.The mean number of rapes per 100,000 citizens among the states in cluster 1 is 21.68.
+
+
+```{r}
+cat("\014")
+rm(list = ls())
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
