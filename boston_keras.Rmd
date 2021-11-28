@@ -1,0 +1,175 @@
+```{r}
+cat("\014")
+rm(list = ls())
+```
+
+## working directory check
+
+```{r}
+getwd()
+
+```
+# set the working directory
+
+```{r}
+setwd("D:/R-code")
+```
+
+# load necessary library
+```{r}
+pacman::p_load(pacman,tensorflow,keras,tfdatasets,dplyr,ggplot2)
+```
+
+```{r}
+boston_housing <- dataset_boston_housing()
+c(train_data, train_labels) %<-% boston_housing$train
+c(test_data, test_labels) %<-% boston_housing$test
+```
+```{r}
+paste0("Training entries: ", length(train_data), ", labels: ", length(train_labels))
+```
+```{r}
+train_data[1, ] # Display sample features, notice the different scales
+```
+```{r}
+column_names <- c('CRIM', 'ZN', 'INDUS', 'CHAS', 'NOX', 'RM', 'AGE', 
+                  'DIS', 'RAD', 'TAX', 'PTRATIO', 'B', 'LSTAT')
+
+train_df <- train_data %>% 
+  as_tibble(.name_repair = "minimal") %>% 
+  setNames(column_names) %>% 
+  mutate(label = train_labels)
+
+test_df <- test_data %>% 
+  as_tibble(.name_repair = "minimal") %>% 
+  setNames(column_names) %>% 
+  mutate(label = test_labels)
+```
+
+```{r}
+train_labels[1:10] # Display first 10 entries
+```
+```{r}
+spec <- feature_spec(train_df, label ~ . ) %>% 
+  step_numeric_column(all_numeric(), normalizer_fn = scaler_standard()) %>% 
+  fit()
+
+spec
+```
+
+```{r}
+layer <- layer_dense_features(
+  feature_columns = dense_features(spec), 
+  dtype = tf$float32
+)
+layer(train_df)
+```
+```{r}
+input <- layer_input_from_dataset(train_df %>% select(-label))
+
+output <- input %>% 
+  layer_dense_features(dense_features(spec)) %>% 
+  layer_dense(units = 64, activation = "relu") %>%
+  layer_dense(units = 64, activation = "relu") %>%
+  layer_dense(units = 1) 
+
+model <- keras_model(input, output)
+
+summary(model)
+```
+
+```{r}
+model %>% 
+  compile(
+    loss = "mse",
+    optimizer = optimizer_rmsprop(),
+    metrics = list("mean_absolute_error")
+  )
+```
+
+```{r}
+build_model <- function() {
+  input <- layer_input_from_dataset(train_df %>% select(-label))
+  
+  output <- input %>% 
+    layer_dense_features(dense_features(spec)) %>% 
+    layer_dense(units = 64, activation = "relu") %>%
+    layer_dense(units = 64, activation = "relu") %>%
+    layer_dense(units = 1) 
+  
+  model <- keras_model(input, output)
+  
+  model %>% 
+    compile(
+      loss = "mse",
+      optimizer = optimizer_rmsprop(),
+      metrics = list("mean_absolute_error")
+    )
+  
+  model
+}
+```
+
+```{r}
+# Display training progress by printing a single dot for each completed epoch.
+print_dot_callback <- callback_lambda(
+  on_epoch_end = function(epoch, logs) {
+    if (epoch %% 80 == 0) cat("\n")
+    cat(".")
+  }
+)    
+
+model <- build_model()
+
+history <- model %>% fit(
+  x = train_df %>% select(-label),
+  y = train_df$label,
+  epochs = 500,
+  validation_split = 0.2,
+  verbose = 0,
+  callbacks = list(print_dot_callback)
+)
+```
+```{r}
+plot(history)
+```
+```{r}
+# The patience parameter is the amount of epochs to check for improvement.
+early_stop <- callback_early_stopping(monitor = "val_loss", patience = 20)
+
+model <- build_model()
+
+history <- model %>% fit(
+  x = train_df %>% select(-label),
+  y = train_df$label,
+  epochs = 500,
+  validation_split = 0.2,
+  verbose = 0,
+  callbacks = list(early_stop)
+)
+
+```
+
+```{r}
+plot(history)
+```
+```{r}
+c(loss, mae) %<-% (model %>% evaluate(test_df %>% select(-label), test_df$label, verbose = 0))
+```
+
+```{r}
+paste0("Mean absolute error on test set: $", sprintf("%.2f", mae * 1000))
+```
+```{r}
+test_predictions <- model %>% predict(test_df %>% select(-label))
+test_predictions[ , 1]
+```
+
+Conclusion
+This notebook introduced a few techniques to handle a regression problem.
+
+Mean Squared Error (MSE) is a common loss function used for regression problems (different than classification problems).
+Similarly, evaluation metrics used for regression differ from classification. A common regression metric is Mean Absolute Error (MAE).
+When input data features have values with different ranges, each feature should be scaled independently.
+If there is not much training data, prefer a small network with few hidden layers to avoid overfitting.
+Early stopping is a useful technique to prevent overfitting.
